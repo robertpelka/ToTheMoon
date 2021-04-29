@@ -12,6 +12,7 @@ class GameScene: SKScene {
     
     var motionManager: CMMotionManager!
     let ball = SKShapeNode(circleOfRadius: 20.0)
+    var platforms = [SKShapeNode]()
     
     override func didMove(to view: SKView) {
         motionManager = CMMotionManager()
@@ -26,7 +27,13 @@ class GameScene: SKScene {
         physicsWorld.contactDelegate = self
         
         spawnBall()
-        spawnPlatform()
+        
+        let spaceBetweenPlatforms = frame.size.height/12
+        for i in 0..<Int(frame.size.height/spaceBetweenPlatforms) {
+            let x = CGFloat.random(in: 0...frame.size.width)
+            let y = CGFloat.random(in: CGFloat(i)*spaceBetweenPlatforms+10...CGFloat(i+1)*spaceBetweenPlatforms-10)
+            spawnPlatform(at: CGPoint(x: x, y: y))
+        }
     }
     
     func spawnBall() {
@@ -41,14 +48,15 @@ class GameScene: SKScene {
         addChild(ball)
     }
     
-    func spawnPlatform() {
-        let platform = SKShapeNode(rectOf: CGSize(width: 120, height: 20))
-        platform.position = CGPoint(x: frame.midX, y: frame.minY + 30)
+    func spawnPlatform(at position: CGPoint) {
+        let platform = SKShapeNode(rectOf: CGSize(width: 60, height: 10))
+        platform.position = position
         platform.fillColor = UIColor.red
-        platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 120, height: 20))
+        platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 60, height: 10))
         platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
         platform.physicsBody?.isDynamic = false
         platform.physicsBody?.affectedByGravity = false
+        platforms.append(platform)
         addChild(platform)
     }
     
@@ -56,12 +64,13 @@ class GameScene: SKScene {
         checkPhoneTilt()
         checkBallPosition()
         checkBallVelocity()
+        updatePlatformsPositions()
     }
     
     func checkPhoneTilt() {
         let defaultA = 9.8
         if let accelerometerData = motionManager.accelerometerData {
-            var xAcceleration = accelerometerData.acceleration.x * 50
+            var xAcceleration = accelerometerData.acceleration.x * 30
             if xAcceleration > defaultA {
                 xAcceleration = defaultA
             }
@@ -91,6 +100,22 @@ class GameScene: SKScene {
         }
     }
     
+    func updatePlatformsPositions() {
+        let minimumHeight: CGFloat = frame.size.height/2
+        guard let ballVelocity = ball.physicsBody?.velocity.dy else {
+            return
+        }
+        if ball.position.y > minimumHeight && ballVelocity > 0 {
+            for platform in platforms {
+                platform.position.y -= ballVelocity/50
+                if platform.position.y < 0-platform.frame.size.height/2 {
+                    platform.position.y = frame.size.height + platform.frame.size.height/2
+                    platform.position.x = CGFloat.random(in: 0...frame.size.width)
+                }
+            }
+        }
+    }
+    
     func fixBallPosition() {
         if let ballWidth = ball.path?.boundingBox.size.width {
             if ball.position.x >= frame.size.width {
@@ -116,7 +141,7 @@ extension GameScene: SKPhysicsContactDelegate {
         if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.platformCategory {
             if let ballVelocity = ball.physicsBody?.velocity.dy {
                 if ballVelocity < 0 {
-                    ball.physicsBody?.velocity.dy = 1000
+                    ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
                 }
             }
         }
