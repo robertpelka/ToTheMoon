@@ -14,18 +14,20 @@ class GameScene: SKScene {
     let ball = SKSpriteNode(imageNamed: "bitcoin")
     var platforms = [SKSpriteNode]()
     var bottom = SKShapeNode()
+    let dollar = SKSpriteNode(imageNamed: "dollar")
+    let scoreLabel = SKLabelNode(text: "$0")
+    var score = 0
     
     override func didMove(to view: SKView) {
         motionManager = CMMotionManager()
         motionManager.startAccelerometerUpdates()
-
+        physicsWorld.contactDelegate = self
         layoutScene()
     }
     
     func layoutScene() {
-        physicsWorld.contactDelegate = self
-        
         addBackground()
+        addScoreCounter()
         spawnBall()
         addBottom()
         makePlatforms()
@@ -37,6 +39,22 @@ class GameScene: SKScene {
         background.size = self.frame.size
         background.zPosition = -1
         addChild(background)
+    }
+    
+    func addScoreCounter() {
+        dollar.texture = SKTexture(imageNamed: "dollar")
+        dollar.position = CGPoint(x: view?.safeAreaInsets.top ?? 30, y: frame.height - (view?.safeAreaInsets.top ?? 10) - 20)
+        dollar.zPosition = 3
+        addChild(dollar)
+        
+        scoreLabel.fontSize = 24.0
+        scoreLabel.fontName = "HelveticaNeue-Bold"
+        scoreLabel.fontColor = UIColor.init(red: 38/255, green: 120/255, blue: 95/255, alpha: 1)
+        scoreLabel.verticalAlignmentMode = .center
+        scoreLabel.horizontalAlignmentMode = .left
+        scoreLabel.position = CGPoint(x: dollar.position.x + dollar.frame.width/2 + 10, y: dollar.position.y)
+        scoreLabel.zPosition = 3
+        addChild(scoreLabel)
     }
     
     func spawnBall() {
@@ -51,7 +69,7 @@ class GameScene: SKScene {
     }
     
     func addBottom() {
-        bottom = SKShapeNode(rectOf: CGSize(width: frame.width, height: 20))
+        bottom = SKShapeNode(rectOf: CGSize(width: frame.width*2, height: 20))
         bottom.position = CGPoint(x: frame.midX, y: 10)
         bottom.fillColor = UIColor.init(red: 19/255, green: 69/255, blue: 51/255, alpha: 1)
         bottom.strokeColor = bottom.fillColor
@@ -116,9 +134,30 @@ class GameScene: SKScene {
         if ball.position.y+ballWidth < 0 {
             ball.removeFromParent()
         }
+        setScore()
         if ball.position.x-ballWidth >= frame.size.width || ball.position.x+ballWidth <= 0 {
             fixBallPosition()
         }
+    }
+    
+    func setScore() {
+        let oldScore = score
+        score = (Int(ball.position.y) - Int(ball.size.height/2)) - (Int(bottom.position.y) - Int(bottom.frame.size.height)/2)
+        score = score < 0 ? 0 : score
+        if score > oldScore {
+            dollar.texture = SKTexture(imageNamed: "dollar")
+            scoreLabel.fontColor = UIColor.init(red: 38/255, green: 120/255, blue: 95/255, alpha: 1)
+        }
+        else {
+            dollar.texture = SKTexture(imageNamed: "dollarRed")
+            scoreLabel.fontColor = UIColor.init(red: 136/255, green: 24/255, blue: 0/255, alpha: 1)
+        }
+        
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        numberFormatter.locale = Locale(identifier: "en_US")
+        let formattedScore = numberFormatter.string(from: NSNumber(value: score))
+        scoreLabel.text = "$" + (formattedScore ?? "0")
     }
     
     func checkBallVelocity() {
