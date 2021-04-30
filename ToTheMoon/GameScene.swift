@@ -11,23 +11,58 @@ import CoreMotion
 class GameScene: SKScene {
     
     var motionManager: CMMotionManager!
-    let ball = SKShapeNode(circleOfRadius: 20.0)
-    var platforms = [SKShapeNode]()
+    let ball = SKSpriteNode(imageNamed: "bitcoin")
+    var platforms = [SKSpriteNode]()
+    var bottom = SKShapeNode()
     
     override func didMove(to view: SKView) {
         motionManager = CMMotionManager()
         motionManager.startAccelerometerUpdates()
-        
+
         layoutScene()
     }
     
     func layoutScene() {
-        backgroundColor = UIColor.darkGray
-        
         physicsWorld.contactDelegate = self
         
+        addBackground()
         spawnBall()
-        
+        addBottom()
+        makePlatforms()
+    }
+    
+    func addBackground() {
+        let background = SKSpriteNode(imageNamed: "background")
+        background.position = CGPoint(x: frame.midX, y: frame.midY)
+        background.size = self.frame.size
+        background.zPosition = -1
+        addChild(background)
+    }
+    
+    func spawnBall() {
+        ball.position = CGPoint(x: frame.midX, y: frame.midY)
+        ball.zPosition = 2
+        ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width/2)
+        ball.physicsBody?.affectedByGravity = true
+        ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
+        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory
+        ball.physicsBody?.collisionBitMask = PhysicsCategories.none
+        addChild(ball)
+    }
+    
+    func addBottom() {
+        bottom = SKShapeNode(rectOf: CGSize(width: frame.width, height: 20))
+        bottom.position = CGPoint(x: frame.midX, y: 10)
+        bottom.fillColor = UIColor.init(red: 19/255, green: 69/255, blue: 51/255, alpha: 1)
+        bottom.strokeColor = bottom.fillColor
+        bottom.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: frame.width, height: 20))
+        bottom.physicsBody?.affectedByGravity = false
+        bottom.physicsBody?.isDynamic = false
+        bottom.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
+        addChild(bottom)
+    }
+    
+    func makePlatforms() {
         let spaceBetweenPlatforms = frame.size.height/12
         for i in 0..<Int(frame.size.height/spaceBetweenPlatforms) {
             let x = CGFloat.random(in: 0...frame.size.width)
@@ -36,23 +71,17 @@ class GameScene: SKScene {
         }
     }
     
-    func spawnBall() {
-        ball.fillColor = UIColor.yellow
-        ball.position = CGPoint(x: frame.midX, y: frame.midY)
-        ball.name = "Ball"
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: 20.0)
-        ball.physicsBody?.affectedByGravity = true
-        ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
-        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory
-        ball.physicsBody?.collisionBitMask = PhysicsCategories.none
-        addChild(ball)
-    }
-    
     func spawnPlatform(at position: CGPoint) {
-        let platform = SKShapeNode(rectOf: CGSize(width: 60, height: 10))
+        var platform = SKSpriteNode()
+        if position.x < frame.midX {
+            platform = SKSpriteNode(imageNamed: "dollarLeft")
+        }
+        else {
+            platform = SKSpriteNode(imageNamed: "dollarRight")
+        }
         platform.position = position
-        platform.fillColor = UIColor.red
-        platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 60, height: 10))
+        platform.zPosition = 1
+        platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: platform.size.width, height: platform.size.height))
         platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
         platform.physicsBody?.isDynamic = false
         platform.physicsBody?.affectedByGravity = false
@@ -77,15 +106,18 @@ class GameScene: SKScene {
             else if xAcceleration < -defaultA {
                 xAcceleration = -defaultA
             }
+            ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/10), duration: 0.1))
             physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultA)
         }
     }
     
     func checkBallPosition() {
-        if let ballWidth = ball.path?.boundingBox.size.width {
-            if ball.position.x-ballWidth >= frame.size.width || ball.position.x+ballWidth <= 0 {
-                fixBallPosition()
-            }
+        let ballWidth = ball.size.width
+        if ball.position.y+ballWidth < 0 {
+            ball.removeFromParent()
+        }
+        if ball.position.x-ballWidth >= frame.size.width || ball.position.x+ballWidth <= 0 {
+            fixBallPosition()
         }
     }
     
@@ -111,24 +143,29 @@ class GameScene: SKScene {
                 if platform.position.y < 0-platform.frame.size.height/2 {
                     platform.position.y = frame.size.height + platform.frame.size.height/2
                     platform.position.x = CGFloat.random(in: 0...frame.size.width)
+                    if platform.position.x < frame.midX {
+                        platform.texture = SKTexture(imageNamed: "dollarLeft")
+                    }
+                    else {
+                        platform.texture = SKTexture(imageNamed: "dollarRight")
+                    }
                 }
             }
+            bottom.position.y -= ballVelocity/50
         }
     }
     
     func fixBallPosition() {
-        if let ballWidth = ball.path?.boundingBox.size.width {
-            if ball.position.x >= frame.size.width {
-                ball.position.x = 0 - ballWidth/2+1
-            }
-            else {
-                ball.position.x = frame.size.width + ballWidth/2-1
-            }
+        let ballWidth = ball.size.width
+        if ball.position.x >= frame.size.width {
+            ball.position.x = 0 - ballWidth/2+1
+        }
+        else {
+            ball.position.x = frame.size.width + ballWidth/2-1
         }
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        ball.removeFromParent()
         spawnBall()
     }
 
