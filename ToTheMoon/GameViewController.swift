@@ -12,19 +12,17 @@ class GameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        
     }
     
     override func viewSafeAreaInsetsDidChange() {
         if let view = self.view as! SKView? {
             // Load the SKScene from 'GameScene.sks'
-            let scene = GameScene(size: view.bounds.size)
+            let menuScene = MenuScene(size: view.bounds.size)
             // Set the scale mode to scale to fit the window
-            scene.scaleMode = .aspectFill
+            menuScene.scaleMode = .aspectFill
                 
             // Present the scene
-            view.presentScene(scene)
+            view.presentScene(menuScene)
             
             view.ignoresSiblingOrder = true
             

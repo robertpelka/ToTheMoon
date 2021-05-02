@@ -17,11 +17,13 @@ class GameScene: SKScene {
     let dollar = SKSpriteNode(imageNamed: "dollar")
     let scoreLabel = SKLabelNode(text: "$0")
     var score = 0
+    var isGameStarted = false
     
     override func didMove(to view: SKView) {
         motionManager = CMMotionManager()
         motionManager.startAccelerometerUpdates()
         physicsWorld.contactDelegate = self
+        physicsWorld.gravity = CGVector(dx: 0, dy: 0)
         layoutScene()
     }
     
@@ -37,14 +39,14 @@ class GameScene: SKScene {
         let background = SKSpriteNode(imageNamed: "background")
         background.position = CGPoint(x: frame.midX, y: frame.midY)
         background.size = self.frame.size
-        background.zPosition = -1
+        background.zPosition = ZPositions.background
         addChild(background)
     }
     
     func addScoreCounter() {
         dollar.texture = SKTexture(imageNamed: "dollar")
         dollar.position = CGPoint(x: view?.safeAreaInsets.top ?? 30, y: frame.height - (view?.safeAreaInsets.top ?? 10) - 20)
-        dollar.zPosition = 3
+        dollar.zPosition = ZPositions.dollar
         addChild(dollar)
         
         scoreLabel.fontSize = 24.0
@@ -53,13 +55,13 @@ class GameScene: SKScene {
         scoreLabel.verticalAlignmentMode = .center
         scoreLabel.horizontalAlignmentMode = .left
         scoreLabel.position = CGPoint(x: dollar.position.x + dollar.frame.width/2 + 10, y: dollar.position.y)
-        scoreLabel.zPosition = 3
+        scoreLabel.zPosition = ZPositions.scoreLabel
         addChild(scoreLabel)
     }
     
     func spawnBall() {
-        ball.position = CGPoint(x: frame.midX, y: frame.midY)
-        ball.zPosition = 2
+        ball.position = CGPoint(x: frame.midX, y: 20 + ball.size.height/2)
+        ball.zPosition = ZPositions.ball
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width/2)
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
@@ -71,7 +73,7 @@ class GameScene: SKScene {
     func addBottom() {
         bottom = SKShapeNode(rectOf: CGSize(width: frame.width*2, height: 20))
         bottom.position = CGPoint(x: frame.midX, y: 10)
-        bottom.fillColor = UIColor.init(red: 19/255, green: 69/255, blue: 51/255, alpha: 1)
+        bottom.fillColor = UIColor.init(red: 25/255, green: 105/255, blue: 81/255, alpha: 1)
         bottom.strokeColor = bottom.fillColor
         bottom.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: frame.width, height: 20))
         bottom.physicsBody?.affectedByGravity = false
@@ -98,7 +100,7 @@ class GameScene: SKScene {
             platform = SKSpriteNode(imageNamed: "dollarRight")
         }
         platform.position = position
-        platform.zPosition = 1
+        platform.zPosition = ZPositions.platform
         platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: platform.size.width, height: platform.size.height))
         platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
         platform.physicsBody?.isDynamic = false
@@ -109,9 +111,11 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         checkPhoneTilt()
-        checkBallPosition()
-        checkBallVelocity()
-        updatePlatformsPositions()
+        if isGameStarted {
+            checkBallPosition()
+            checkBallVelocity()
+            updatePlatformsPositions()
+        }
     }
     
     func checkPhoneTilt() {
@@ -125,14 +129,18 @@ class GameScene: SKScene {
                 xAcceleration = -defaultA
             }
             ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/10), duration: 0.1))
-            physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultA)
+            if isGameStarted {
+                physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultA)
+            }
         }
     }
     
     func checkBallPosition() {
         let ballWidth = ball.size.width
         if ball.position.y+ballWidth < 0 {
-            ball.removeFromParent()
+            let menuScene = MenuScene.init(size: view!.bounds.size)
+            run(SKAction.playSoundFileNamed("gameOver", waitForCompletion: false))
+            view?.presentScene(menuScene)
         }
         setScore()
         if ball.position.x-ballWidth >= frame.size.width || ball.position.x+ballWidth <= 0 {
@@ -147,6 +155,10 @@ class GameScene: SKScene {
         if score > oldScore {
             dollar.texture = SKTexture(imageNamed: "dollar")
             scoreLabel.fontColor = UIColor.init(red: 38/255, green: 120/255, blue: 95/255, alpha: 1)
+            UserDefaults.standard.setValue(score, forKey: "LastScore")
+            if score > UserDefaults.standard.integer(forKey: "HighScore") {
+                UserDefaults.standard.setValue(score, forKey: "HighScore")
+            }
         }
         else {
             dollar.texture = SKTexture(imageNamed: "dollarRed")
@@ -205,7 +217,11 @@ class GameScene: SKScene {
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        spawnBall()
+        if !isGameStarted {
+            run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
+            ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
+            isGameStarted = true
+        }
     }
 
 }
@@ -217,6 +233,7 @@ extension GameScene: SKPhysicsContactDelegate {
         if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.platformCategory {
             if let ballVelocity = ball.physicsBody?.velocity.dy {
                 if ballVelocity < 0 {
+                    run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
                     ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
                 }
             }
