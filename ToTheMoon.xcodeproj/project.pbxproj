@@ -61,6 +61,14 @@
 			path = Sounds;
 			sourceTree = "<group>";
 		};
+		482FAAAF263F173400B8DFC4 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				485009FC2634633000BC230B /* GameViewController.swift */,
+			);
+			path = Controllers;
+			sourceTree = "<group>";
+		};
 		485009E82634633000BC230B = {
 			isa = PBXGroup;
 			children = (
@@ -82,7 +90,7 @@
 			children = (
 				485009F42634633000BC230B /* AppDelegate.swift */,
 				482FAA9D263EE46C00B8DFC4 /* Scenes */,
-				485009FC2634633000BC230B /* GameViewController.swift */,
+				482FAAAF263F173400B8DFC4 /* Controllers */,
 				485009FE2634633000BC230B /* Main.storyboard */,
 				48500A012634633400BC230B /* Assets.xcassets */,
 				48500A032634633500BC230B /* Info.plist */,
