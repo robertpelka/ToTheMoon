@@ -65,7 +65,7 @@ class GameScene: SKScene {
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width/2)
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
-        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory
+        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory | PhysicsCategories.strapOfDollarsCategory
         ball.physicsBody?.collisionBitMask = PhysicsCategories.none
         addChild(ball)
     }
@@ -192,17 +192,59 @@ class GameScene: SKScene {
             for platform in platforms {
                 platform.position.y -= ballVelocity/50
                 if platform.position.y < 0-platform.frame.size.height/2 {
-                    platform.position.y = frame.size.height + platform.frame.size.height/2
-                    platform.position.x = CGFloat.random(in: 0...frame.size.width)
-                    if platform.position.x < frame.midX {
-                        platform.texture = SKTexture(imageNamed: "dollarLeft")
-                    }
-                    else {
-                        platform.texture = SKTexture(imageNamed: "dollarRight")
-                    }
+                    update(platform: platform)
                 }
             }
             bottom.position.y -= ballVelocity/50
+        }
+    }
+    
+    func update(platform: SKSpriteNode) {
+        platform.position.x = CGFloat.random(in: 0...frame.size.width)
+        
+        var direction = "Left"
+        if platform.position.x > frame.midX {
+            direction = "Right"
+        }
+        
+        platform.removeAllActions()
+        if Int.random(in: 1...5) == 1 {
+            platform.texture = SKTexture(imageNamed: "strapOfDollars" + direction)
+            updateSizeOf(platform: platform)
+            platform.physicsBody?.categoryBitMask = PhysicsCategories.strapOfDollarsCategory
+            if direction == "Left" {
+                platform.position.x = 0
+                animate(platform: platform, isLeft: true)
+            }
+            else {
+                platform.position.x = frame.size.width
+                animate(platform: platform, isLeft: false)
+            }
+        }
+        else {
+            platform.texture = SKTexture(imageNamed: "dollar" + direction)
+            updateSizeOf(platform: platform)
+            platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
+        }
+        
+        platform.position.y = frame.size.height + platform.frame.size.height/2
+    }
+    
+    func updateSizeOf(platform: SKSpriteNode) {
+        if let textureSize = platform.texture?.size() {
+            platform.size = CGSize(width: textureSize.width, height: textureSize.height)
+            platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: platform.size.width, height: platform.size.height))
+            platform.physicsBody?.isDynamic = false
+            platform.physicsBody?.affectedByGravity = false
+        }
+    }
+    
+    func animate(platform: SKSpriteNode, isLeft: Bool) {
+        let distanceX = isLeft ? frame.size.width : -frame.size.width
+        platform.run(SKAction.moveBy(x: distanceX, y: 0, duration: 2)) {
+            platform.run(SKAction.moveBy(x: -distanceX, y: 0, duration: 2)) {
+                self.animate(platform: platform, isLeft: isLeft)
+            }
         }
     }
     
@@ -230,14 +272,17 @@ extension GameScene: SKPhysicsContactDelegate {
     
     func didBegin(_ contact: SKPhysicsContact) {
         let contactMask = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
-        if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.platformCategory {
-            if let ballVelocity = ball.physicsBody?.velocity.dy {
-                if ballVelocity < 0 {
+        if let ballVelocity = ball.physicsBody?.velocity.dy {
+            if ballVelocity < 0 {
+                if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.platformCategory {
                     run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
                     ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
+                }
+                else if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.strapOfDollarsCategory {
+                    run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
+                    ball.physicsBody?.velocity.dy = (frame.size.height*1.2 - ball.position.y) * 1.5
                 }
             }
         }
     }
-    
 }
