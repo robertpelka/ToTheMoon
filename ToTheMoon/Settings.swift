@@ -12,6 +12,7 @@ enum PhysicsCategories {
     static let ballCategory: UInt32 = 0x1
     static let platformCategory: UInt32 = 0x1 << 1
     static let strapOfDollarsCategory: UInt32 = 0x1 << 2
+    static let dollarWithHoleCategory: UInt32 = 0x1 << 3
 }
 
 enum ZPositions {
