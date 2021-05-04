@@ -18,6 +18,10 @@ class GameScene: SKScene {
     let scoreLabel = SKLabelNode(text: "$0")
     var score = 0
     var isGameStarted = false
+    let playJumpSound = SKAction.playSoundFileNamed("jump", waitForCompletion: false)
+    let playBreakSound = SKAction.playSoundFileNamed("break", waitForCompletion: false)
+    var isSuperJumpOn = false
+    var superJumpCounter: CGFloat = 0
     
     override func didMove(to view: SKView) {
         motionManager = CMMotionManager()
@@ -45,7 +49,7 @@ class GameScene: SKScene {
     
     func addScoreCounter() {
         dollar.texture = SKTexture(imageNamed: "dollar")
-        dollar.position = CGPoint(x: view?.safeAreaInsets.top ?? 30, y: frame.height - (view?.safeAreaInsets.top ?? 10) - 20)
+        dollar.position = CGPoint(x: 20 + dollar.size.width/2, y: frame.height - (view?.safeAreaInsets.top ?? 10) - 20)
         dollar.zPosition = ZPositions.dollar
         addChild(dollar)
         
@@ -66,7 +70,7 @@ class GameScene: SKScene {
         ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width/2)
         ball.physicsBody?.affectedByGravity = true
         ball.physicsBody?.categoryBitMask = PhysicsCategories.ballCategory
-        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory | PhysicsCategories.strapOfDollarsCategory | PhysicsCategories.dollarWithHoleCategory
+        ball.physicsBody?.contactTestBitMask = PhysicsCategories.platformCategory | PhysicsCategories.dollarWithHoleCategory | PhysicsCategories.tweet
         ball.physicsBody?.collisionBitMask = PhysicsCategories.none
         addChild(ball)
     }
@@ -84,7 +88,7 @@ class GameScene: SKScene {
     }
     
     func makePlatforms() {
-        let spaceBetweenPlatforms = frame.size.height/12
+        let spaceBetweenPlatforms = frame.size.height/10
         for i in 0..<Int(frame.size.height/spaceBetweenPlatforms) {
             let x = CGFloat.random(in: 0...frame.size.width)
             let y = CGFloat.random(in: CGFloat(i)*spaceBetweenPlatforms+10...CGFloat(i+1)*spaceBetweenPlatforms-10)
@@ -120,18 +124,21 @@ class GameScene: SKScene {
     }
     
     func checkPhoneTilt() {
-        let defaultA = 9.8
+        var defaultAcceleration = 9.8
         if let accelerometerData = motionManager.accelerometerData {
             var xAcceleration = accelerometerData.acceleration.x * 30
-            if xAcceleration > defaultA {
-                xAcceleration = defaultA
+            if xAcceleration > defaultAcceleration {
+                xAcceleration = defaultAcceleration
             }
-            else if xAcceleration < -defaultA {
-                xAcceleration = -defaultA
+            else if xAcceleration < -defaultAcceleration {
+                xAcceleration = -defaultAcceleration
             }
             ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/10), duration: 0.1))
+            if isSuperJumpOn {
+                defaultAcceleration = -0.1
+            }
             if isGameStarted {
-                physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultA)
+                physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultAcceleration)
             }
         }
     }
@@ -185,22 +192,28 @@ class GameScene: SKScene {
     }
     
     func updatePlatformsPositions() {
-        let minimumHeight: CGFloat = frame.size.height/2
+        var minimumHeight: CGFloat = frame.size.height/2
         guard let ballVelocity = ball.physicsBody?.velocity.dy else {
             return
         }
+        var distance = ballVelocity/50
+        if isSuperJumpOn {
+            minimumHeight = 0
+            distance = 30 - superJumpCounter
+            superJumpCounter += 0.16
+        }
         if ball.position.y > minimumHeight && ballVelocity > 0 {
             for platform in platforms {
-                platform.position.y -= ballVelocity/50
+                platform.position.y -= distance
                 if platform.position.y < 0-platform.frame.size.height/2 {
-                    update(platform: platform)
+                    update(platform: platform, positionY: platform.position.y)
                 }
             }
-            bottom.position.y -= ballVelocity/50
+            bottom.position.y -= distance
         }
     }
     
-    func update(platform: SKSpriteNode) {
+    func update(platform: SKSpriteNode, positionY: CGFloat) {
         platform.position.x = CGFloat.random(in: 0...frame.size.width)
         
         var direction = "Left"
@@ -210,10 +223,15 @@ class GameScene: SKScene {
         
         platform.removeAllActions()
         platform.alpha = 1.0
-        if Int.random(in: 1...5) == 1 {
+        if Int.random(in: 1...35) == 1 {
+            platform.texture = SKTexture(imageNamed: "tweet")
+            updateSizeOf(platform: platform)
+            platform.physicsBody?.categoryBitMask = PhysicsCategories.tweet
+        }
+        else if Int.random(in: 1...5) == 1 {
             platform.texture = SKTexture(imageNamed: "strapOfDollars" + direction)
             updateSizeOf(platform: platform)
-            platform.physicsBody?.categoryBitMask = PhysicsCategories.strapOfDollarsCategory
+            platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
             if direction == "Left" {
                 platform.position.x = 0
                 animate(platform: platform, isLeft: true)
@@ -234,7 +252,7 @@ class GameScene: SKScene {
             platform.physicsBody?.categoryBitMask = PhysicsCategories.platformCategory
         }
         
-        platform.position.y = frame.size.height + platform.frame.size.height/2
+        platform.position.y = frame.size.height + platform.frame.size.height/2 + platform.position.y
     }
     
     func updateSizeOf(platform: SKSpriteNode) {
@@ -267,9 +285,9 @@ class GameScene: SKScene {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if !isGameStarted {
-            run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
             ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
             isGameStarted = true
+            run(playJumpSound)
         }
     }
 
@@ -282,20 +300,25 @@ extension GameScene: SKPhysicsContactDelegate {
         if let ballVelocity = ball.physicsBody?.velocity.dy {
             if ballVelocity < 0 {
                 if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.platformCategory {
-                    run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
+                    run(playJumpSound)
                     ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
-                }
-                else if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.strapOfDollarsCategory {
-                    run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
-                    ball.physicsBody?.velocity.dy = (frame.size.height*1.2 - ball.position.y) * 1.5
                 }
                 else if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.dollarWithHoleCategory {
-                    run(SKAction.playSoundFileNamed("jump", waitForCompletion: false))
+                    run(playJumpSound)
+                    run(playBreakSound)
                     ball.physicsBody?.velocity.dy = frame.size.height*1.2 - ball.position.y
                     if let platform = (contact.bodyA.node?.name != "Ball") ? contact.bodyA.node as? SKSpriteNode : contact.bodyB.node as? SKSpriteNode {
-                        print("succes")
                         platform.physicsBody?.categoryBitMask = PhysicsCategories.none
                         platform.run(SKAction.fadeOut(withDuration: 0.5))
+                    }
+                }
+                else if contactMask == PhysicsCategories.ballCategory | PhysicsCategories.tweet {
+                    run(SKAction.playSoundFileNamed("superJump", waitForCompletion: false))
+                    ball.physicsBody?.velocity.dy = 10
+                    isSuperJumpOn = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                        self.isSuperJumpOn = false
+                        self.superJumpCounter = 0
                     }
                 }
             }

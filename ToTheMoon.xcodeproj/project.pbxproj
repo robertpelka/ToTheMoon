@@ -10,6 +10,8 @@
 		482FAAA0263EE69C00B8DFC4 /* MenuScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 482FAA9F263EE69C00B8DFC4 /* MenuScene.swift */; };
 		482FAAA3263EF5CB00B8DFC4 /* jump.wav in Resources */ = {isa = PBXBuildFile; fileRef = 482FAAA2263EF5CB00B8DFC4 /* jump.wav */; };
 		482FAAA8263EF79D00B8DFC4 /* gameOver.wav in Resources */ = {isa = PBXBuildFile; fileRef = 482FAAA7263EF79D00B8DFC4 /* gameOver.wav */; };
+		482FAAB42641A9A400B8DFC4 /* superJump.wav in Resources */ = {isa = PBXBuildFile; fileRef = 482FAAB32641A9A300B8DFC4 /* superJump.wav */; };
+		482FAAB72641B12A00B8DFC4 /* break.wav in Resources */ = {isa = PBXBuildFile; fileRef = 482FAAB62641B12A00B8DFC4 /* break.wav */; };
 		485009F52634633000BC230B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485009F42634633000BC230B /* AppDelegate.swift */; };
 		485009FB2634633000BC230B /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485009FA2634633000BC230B /* GameScene.swift */; };
 		485009FD2634633000BC230B /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 485009FC2634633000BC230B /* GameViewController.swift */; };
@@ -22,6 +24,8 @@
 		482FAA9F263EE69C00B8DFC4 /* MenuScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuScene.swift; sourceTree = "<group>"; };
 		482FAAA2263EF5CB00B8DFC4 /* jump.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = jump.wav; sourceTree = "<group>"; };
 		482FAAA7263EF79D00B8DFC4 /* gameOver.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = gameOver.wav; sourceTree = "<group>"; };
+		482FAAB32641A9A300B8DFC4 /* superJump.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = superJump.wav; sourceTree = "<group>"; };
+		482FAAB62641B12A00B8DFC4 /* break.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = break.wav; sourceTree = "<group>"; };
 		485009F12634633000BC230B /* ToTheMoon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ToTheMoon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		485009F42634633000BC230B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		485009FA2634633000BC230B /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
@@ -55,6 +59,8 @@
 		482FAAA5263EF5CF00B8DFC4 /* Sounds */ = {
 			isa = PBXGroup;
 			children = (
+				482FAAB62641B12A00B8DFC4 /* break.wav */,
+				482FAAB32641A9A300B8DFC4 /* superJump.wav */,
 				482FAAA7263EF79D00B8DFC4 /* gameOver.wav */,
 				482FAAA2263EF5CB00B8DFC4 /* jump.wav */,
 			);
@@ -157,7 +163,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				482FAAB42641A9A400B8DFC4 /* superJump.wav in Resources */,
 				482FAAA3263EF5CB00B8DFC4 /* jump.wav in Resources */,
+				482FAAB72641B12A00B8DFC4 /* break.wav in Resources */,
 				48500A002634633000BC230B /* Main.storyboard in Resources */,
 				482FAAA8263EF79D00B8DFC4 /* gameOver.wav in Resources */,
 				48500A022634633400BC230B /* Assets.xcassets in Resources */,
