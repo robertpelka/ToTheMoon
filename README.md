@@ -1,8 +1,8 @@
 # ToTheMoon
 
 <p align="center">
-  <a href="https://user-images.githubusercontent.com/71329150/117194601-92160f00-ade4-11eb-9154-7f1272b82f40.mp4">
-    <img src="https://user-images.githubusercontent.com/71329150/117194836-dbfef500-ade4-11eb-8f0a-bae2d74acfae.gif" alt="screenshot">
+  <a href="https://user-images.githubusercontent.com/71329150/117196848-50d32e80-ade7-11eb-9a0d-e45e180ba66d.mp4">
+    <img src="https://user-images.githubusercontent.com/71329150/117196884-621c3b00-ade7-11eb-9af9-6fdd0f1fb98b.gif" alt="screenshot">
   </a>
 </p>
 
