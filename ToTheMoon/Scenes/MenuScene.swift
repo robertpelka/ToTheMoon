@@ -22,7 +22,7 @@ class MenuScene: SKScene {
     func addBackground() {
         let background = SKSpriteNode(imageNamed: "background")
         background.position = CGPoint(x: frame.midX, y: frame.midY)
-        background.size = self.frame.size
+        background.size = background.texture!.size()
         background.zPosition = ZPositions.background
         addChild(background)
     }

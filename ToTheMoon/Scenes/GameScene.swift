@@ -17,6 +17,7 @@ class GameScene: SKScene {
     let dollar = SKSpriteNode(imageNamed: "dollar")
     let scoreLabel = SKLabelNode(text: "$0")
     var score = 0
+    var highestScore = 0
     var isGameStarted = false
     let playJumpSound = SKAction.playSoundFileNamed("jump", waitForCompletion: false)
     let playBreakSound = SKAction.playSoundFileNamed("break", waitForCompletion: false)
@@ -42,7 +43,7 @@ class GameScene: SKScene {
     func addBackground() {
         let background = SKSpriteNode(imageNamed: "background")
         background.position = CGPoint(x: frame.midX, y: frame.midY)
-        background.size = self.frame.size
+        background.size = background.texture!.size()
         background.zPosition = ZPositions.background
         addChild(background)
     }
@@ -134,10 +135,10 @@ class GameScene: SKScene {
                 xAcceleration = -defaultAcceleration
             }
             ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/10), duration: 0.1))
-            if isSuperJumpOn {
-                defaultAcceleration = -0.1
-            }
             if isGameStarted {
+                if isSuperJumpOn {
+                    defaultAcceleration = -0.1
+                }
                 physicsWorld.gravity = CGVector(dx: xAcceleration, dy: -defaultAcceleration)
             }
         }
@@ -146,13 +147,21 @@ class GameScene: SKScene {
     func checkBallPosition() {
         let ballWidth = ball.size.width
         if ball.position.y+ballWidth < 0 {
-            let menuScene = MenuScene.init(size: view!.bounds.size)
             run(SKAction.playSoundFileNamed("gameOver", waitForCompletion: false))
+            saveScore()
+            let menuScene = MenuScene.init(size: view!.bounds.size)
             view?.presentScene(menuScene)
         }
         setScore()
         if ball.position.x-ballWidth >= frame.size.width || ball.position.x+ballWidth <= 0 {
             fixBallPosition()
+        }
+    }
+    
+    func saveScore() {
+        UserDefaults.standard.setValue(highestScore, forKey: "LastScore")
+        if highestScore > UserDefaults.standard.integer(forKey: "HighScore") {
+            UserDefaults.standard.setValue(highestScore, forKey: "HighScore")
         }
     }
     
@@ -163,9 +172,8 @@ class GameScene: SKScene {
         if score > oldScore {
             dollar.texture = SKTexture(imageNamed: "dollar")
             scoreLabel.fontColor = UIColor.init(red: 38/255, green: 120/255, blue: 95/255, alpha: 1)
-            UserDefaults.standard.setValue(score, forKey: "LastScore")
-            if score > UserDefaults.standard.integer(forKey: "HighScore") {
-                UserDefaults.standard.setValue(score, forKey: "HighScore")
+            if score > highestScore {
+                highestScore = score
             }
         }
         else {
