@@ -127,14 +127,14 @@ class GameScene: SKScene {
     func checkPhoneTilt() {
         var defaultAcceleration = 9.8
         if let accelerometerData = motionManager.accelerometerData {
-            var xAcceleration = accelerometerData.acceleration.x * 30
+            var xAcceleration = accelerometerData.acceleration.x * 10
             if xAcceleration > defaultAcceleration {
                 xAcceleration = defaultAcceleration
             }
             else if xAcceleration < -defaultAcceleration {
                 xAcceleration = -defaultAcceleration
             }
-            ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/10), duration: 0.1))
+            ball.run(SKAction.rotate(toAngle: CGFloat(-xAcceleration/5), duration: 0.1))
             if isGameStarted {
                 if isSuperJumpOn {
                     defaultAcceleration = -0.1
